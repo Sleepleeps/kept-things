@@ -1,0 +1,20 @@
+{
+  "name": "kept-things",
+  "version": "1.0.0",
+  "description": "本地个人学习看板 — Pin & Paper 风格",
+  "private": true,
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "repair-titles": "node server/scripts/repairTitles.js"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.10",
+    "cors": "^2.8.5",
+    "epubjs": "^0.3.93",
+    "express": "^4.19.2",
+    "jszip": "^3.10.1",
+    "multer": "^2.0.0",
+    "pdf-lib": "^1.17.1"
+  }
+}

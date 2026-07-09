@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Kept Things</title>
+<style>
+  :root{ --paper:#EFE44D; --ink:#1E2AA8; --ink-dark:#131B70; --cream:#FAF3D6; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    width:260px; font-family:'Segoe UI',system-ui,sans-serif; background:var(--paper); color:var(--ink);
+    padding:14px;
+  }
+  h1{ font-size:15px; font-weight:800; margin-bottom:10px; }
+  .page-title{
+    font-size:11px; opacity:.75; margin-bottom:10px; max-height:34px; overflow:hidden;
+    line-height:1.3;
+  }
+  select{
+    width:100%; font:600 12px inherit; color:var(--ink); background:var(--cream);
+    border:1.5px solid var(--ink); padding:6px; margin-bottom:10px;
+  }
+  button{
+    width:100%; font:700 12px inherit; letter-spacing:.03em; text-transform:uppercase;
+    border:1.5px solid var(--ink); background:var(--cream); color:var(--ink);
+    padding:8px; cursor:pointer; box-shadow:2px 3px 0 rgba(19,27,112,.28);
+  }
+  button:hover{ background:var(--ink); color:var(--cream); }
+  button:disabled{ opacity:.5; cursor:default; box-shadow:none; }
+  .status{ margin-top:10px; font-size:11px; min-height:14px; }
+  .status.error{ color:#a30000; }
+  .status.ok{ color:#136b13; }
+</style>
+</head>
+<body>
+  <h1>📌 Kept Things</h1>
+  <div class="page-title" id="pageTitle">…</div>
+  <select id="modSelect"><option>正在读取模块…</option></select>
+  <button id="btnSave">收藏当前页</button>
+  <div class="status" id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

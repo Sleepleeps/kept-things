@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kept Things — 阅读器</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/reader.css">
+</head>
+<body class="reader-body">
+  <div class="reader-toolbar">
+    <a class="tb" href="/">← 返回看板</a>
+    <span class="reader-title" id="bookTitle">…</span>
+    <div class="reader-controls">
+      <button class="tb" id="btnToc" title="目录">☰ 目录</button>
+      <button class="tb" id="btnFontDown" title="字号缩小">A-</button>
+      <button class="tb" id="btnFontUp" title="字号放大">A+</button>
+      <button class="tb" id="btnPrev" title="上一页">‹ 上一页</button>
+      <button class="tb" id="btnNext" title="下一页">下一页 ›</button>
+    </div>
+  </div>
+  <div class="reader-body-wrap">
+    <aside class="toc-panel" id="tocPanel" hidden></aside>
+    <div id="viewer" class="viewer"></div>
+  </div>
+  <div class="reader-progress"><span id="progressLabel">—</span></div>
+  <div class="toast" id="toast"></div>
+
+  <script src="/vendor/jszip/jszip.min.js"></script>
+  <script src="/vendor/epubjs/epub.min.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/reader.js"></script>
+</body>
+</html>

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kept Things — 学习看板</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE44D; --paper-deep:#E4D83B;
+    --ink:#1E2AA8; --ink-dark:#131B70;
+    --cream:#FAF3D6; --cream-2:#F5EBC0;
+    --line:rgba(30,42,168,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Archivo',system-ui,sans-serif;
+    background:var(--paper); color:var(--ink);
+    min-height:100vh; position:relative;
+    padding:40px 44px 90px;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity:.07;mix-blend-mode:multiply;
+  }
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;font-weight:700;text-transform:uppercase;opacity:.75}
+  h1{font-weight:800;font-size:clamp(34px,6vw,64px);letter-spacing:-0.02em;line-height:.95;margin-top:6px}
+  .hand{font-family:'Caveat',cursive;font-weight:700;font-size:22px;transform:rotate(-2deg);max-width:280px;line-height:1.15}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}
+  .tb{
+    font:700 11px 'Archivo',sans-serif;letter-spacing:.06em;text-transform:uppercase;
+    border:1.5px solid var(--ink);background:var(--cream);color:var(--ink);
+    padding:6px 12px;cursor:pointer;box-shadow:2.5px 3px 0 rgba(19,27,112,.28);
+  }
+  .tb:hover{background:var(--ink);color:var(--cream)}
+  .tb:active{transform:translate(1px,1px);box-shadow:1px 1px 0 rgba(19,27,112,.28)}
+  .hint{font-family:'Caveat',cursive;font-size:19px;margin:8px 0 24px;opacity:.85}
+  .hint b{border-bottom:2px solid var(--ink)}
+
+  .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:34px 28px;align-items:start}
+  .card{
+    background:var(--cream); border:1.5px solid var(--ink);
+    box-shadow:5px 6px 0 rgba(19,27,112,.28);
+    padding:46px 20px 18px; position:relative;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:nth-child(3n+1){transform:rotate(-.7deg)}
+  .card:nth-child(3n+2){transform:rotate(.5deg);background:var(--cream-2)}
+  .card:nth-child(3n){transform:rotate(-.3deg)}
+  .card.dragover{
+    outline:2.5px dashed var(--ink);outline-offset:6px;
+    transform:rotate(0) scale(1.015);
+    box-shadow:8px 10px 0 rgba(19,27,112,.35);
+  }
+  .card.dragover::after{
+    content:"松手，放进这里 ↓";
+    font-family:'Caveat',cursive;font-size:21px;font-weight:700;
+    position:absolute;top:8px;right:14px;color:var(--ink);
+  }
+  .pin{position:absolute;top:-16px;left:22px;transform:rotate(-24deg);pointer-events:none}
+  .rule-tag{font-size:10px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;opacity:.6;position:absolute;top:18px;left:20px}
+  .card h2{font-weight:800;font-size:23px;letter-spacing:-.01em;line-height:1.05;margin-bottom:4px;cursor:text;word-break:break-word}
+  .card h2 input{font:inherit;color:inherit;background:transparent;border:none;border-bottom:2px dashed var(--line);width:100%;outline:none}
+  .count{font-family:'Caveat',cursive;font-size:17px;opacity:.8;margin-bottom:12px}
+
+  ul.items{list-style:none;display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  li.item{
+    display:flex;align-items:baseline;gap:8px;
+    padding:7px 2px;border-bottom:1px solid rgba(30,42,168,.18);
+    font-size:13.5px;line-height:1.35;
+  }
+  li.item:last-child{border-bottom:none}
+  .tag{
+    flex:none;font-size:9px;font-weight:800;letter-spacing:.08em;
+    border:1.2px solid var(--ink);padding:2px 5px;transform:translateY(-1px);
+    background:transparent;color:var(--ink);border-radius:2px;
+  }
+  .tag.video{background:var(--ink);color:var(--cream)}
+  a.res,.filelink{color:var(--ink-dark);font-weight:600;text-decoration:none;border-bottom:1.5px solid var(--line);word-break:break-word;flex:1;cursor:pointer}
+  a.res:hover,.filelink:hover{background:rgba(30,42,168,.1)}
+  .res.done,.noturl.done,.filelink.done{opacity:.45;text-decoration:line-through;text-decoration-thickness:2px}
+  .noturl{color:var(--ink-dark);font-weight:600;flex:1;word-break:break-word}
+  .pending{font-family:'Caveat',cursive;font-size:13px;opacity:.65;flex:none}
+  .ibtns{flex:none;display:flex;gap:2px;opacity:0;transition:opacity .12s}
+  li.item:hover .ibtns{opacity:1}
+  .ib{border:none;background:none;color:var(--ink);cursor:pointer;font-size:13px;padding:1px 4px;line-height:1}
+  .ib:hover{background:rgba(30,42,168,.12);border-radius:3px}
+  .edit-in{font:inherit;flex:1;border:none;border-bottom:2px dashed var(--line);background:transparent;color:var(--ink-dark);outline:none}
+  .empty{font-family:'Caveat',cursive;font-size:20px;opacity:.75;padding:18px 4px 14px;transform:rotate(-1.5deg)}
+  .addline{display:flex;gap:8px;margin-top:4px}
+  .addline input{
+    flex:1;font:500 12.5px 'Archivo',sans-serif;color:var(--ink);
+    background:transparent;border:none;border-bottom:1.5px solid var(--line);
+    padding:6px 2px;outline:none;
+  }
+  .addline input::placeholder{color:rgba(30,42,168,.5)}
+  .addline input:focus{border-bottom-color:var(--ink)}
+  .del-mod{position:absolute;top:14px;right:14px;border:none;background:none;color:var(--ink);cursor:pointer;font-size:15px;opacity:.4;padding:4px;line-height:1}
+  .del-mod:hover{opacity:1}
+  .card.new{
+    background:transparent;border:2px dashed var(--line);box-shadow:none;
+    display:flex;align-items:center;justify-content:center;min-height:190px;
+    cursor:pointer;padding:20px;
+  }
+  .card.new:hover{border-color:var(--ink);background:rgba(250,243,214,.5)}
+  .card.new span{font-family:'Caveat',cursive;font-size:26px;font-weight:700}
+
+  footer{margin-top:46px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:10px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;opacity:.7}
+  #storemode{font-family:'Caveat',cursive;font-size:16px;letter-spacing:0;text-transform:none;font-weight:700}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) rotate(-1deg);
+    background:var(--ink);color:var(--cream);font-family:'Caveat',cursive;font-size:19px;
+    padding:8px 20px;box-shadow:4px 5px 0 rgba(19,27,112,.3);opacity:0;pointer-events:none;
+    transition:opacity .25s;z-index:9;max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1}
+
+  @media (max-width:560px){
+    body{padding:16px 12px 60px}
+    header .hand,.hint,.eyebrow{display:none}
+    h1{font-size:24px}
+    .board{grid-template-columns:1fr;gap:18px}
+    .card{padding:34px 14px 12px}
+    .card h2{font-size:17px}
+    li.item{font-size:12.5px;padding:5px 2px}
+    .ibtns{opacity:1}
+    .toolbar{gap:6px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">A Field Guide · Vol. 3</div>
+      <h1>Kept things</h1>
+    </div>
+    <div class="hand">For: moi.<br>Un module, une envie.<br>把想学的都别在这里 ↷</div>
+  </header>
+  <div class="toolbar">
+    <button class="tb" id="btnPip" title="弹出置顶迷你清单（Chrome/Edge）">📌 Mini</button>
+    <button class="tb" id="btnMarklet" title="复制书签小工具，在任何网页一键收藏">🔖 Bookmarklet</button>
+    <button class="tb" id="btnExport" title="下载 JSON 备份">↧ Export</button>
+    <button class="tb" id="btnImport" title="从 JSON 备份恢复">↥ Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+  <p class="hint">三种收入方式：① 在卡片输入框粘贴「<b>标题 | 链接</b>」或纯链接（可多行批量），回车；② 用 🔖 Bookmarklet 在任何网页一键复制再粘贴；③ 拖拽链接或本地 PDF/EPUB 文件进卡片。</p>
+
+  <div class="board" id="board"></div>
+
+  <footer>
+    <span>North Field Office</span>
+    <span id="storemode">…</span>
+    <span id="pgno">—</span>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="pinShape">
+      <path d="M4 22 Q2 26 5 28 Q8 30 10 26 L26 6 Q28 3 25 1.5 Q22 0 20 3 L7 20" fill="none" stroke="#1E2AA8" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="5.5" cy="26.5" r="3.6" fill="none" stroke="#1E2AA8" stroke-width="2.2"/>
+    </g>
+  </defs>
+</svg>
+
+<script>
+const KEY='pin-paper-learning-board-v1';
+let state=null;
+let storeMode='memory';
+let pipWin=null;
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+const DEFAULT={modules:[
+  {id:uid(),name:'Développement — 从零开始',items:[]},
+  {id:uid(),name:'IA & données',items:[]},
+  {id:uid(),name:'Français C1 → C2',items:[]}
+]};
+
+/* ================= storage: claude -> localStorage -> memory ================= */
+async function detectStore(){
+  if(typeof window.storage!=='undefined' && window.storage && window.storage.get){ storeMode='claude'; return; }
+  try{ localStorage.setItem('__t__','1'); localStorage.removeItem('__t__'); storeMode='local'; return; }catch(e){}
+  storeMode='memory';
+}
+async function load(){
+  await detectStore();
+  let raw=null;
+  if(storeMode==='claude'){
+    try{ const r=await window.storage.get(KEY); raw=r?r.value:null; }catch(e){ raw=null; }
+    if(raw===null){ try{ raw=localStorage.getItem(KEY); }catch(e){} }
+  }else if(storeMode==='local'){
+    try{ raw=localStorage.getItem(KEY); }catch(e){}
+  }
+  try{ state=raw?JSON.parse(raw):structuredClone(DEFAULT); }
+  catch(e){ state=structuredClone(DEFAULT); }
+  updateStoreLabel();
+  render();
+}
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(doSave,350);
+  renderPiP();
+}
+async function doSave(){
+  const raw=JSON.stringify(state);
+  if(storeMode==='claude'){
+    try{ const r=await window.storage.set(KEY,raw); if(r){updateStoreLabel();return;} }catch(e){}
+    try{ localStorage.setItem(KEY,raw); storeMode='local'; updateStoreLabel(); return; }catch(e){}
+    storeMode='memory'; updateStoreLabel(); toast('自动保存不可用 — 请用 Export 手动备份');
+  }else if(storeMode==='local'){
+    try{ localStorage.setItem(KEY,raw); updateStoreLabel(); return; }catch(e){}
+    storeMode='memory'; updateStoreLabel(); toast('自动保存不可用 — 请用 Export 手动备份');
+  }else{ updateStoreLabel(); }
+}
+function updateStoreLabel(){
+  const el=document.getElementById('storemode');
+  const map={claude:'sauvegardé ✓ (compte Claude)',local:'sauvegardé ✓ (ce navigateur)',memory:'⚠ 仅本次会话 — 记得 Export 备份'};
+  el.textContent=map[storeMode];
+  el.style.opacity=storeMode==='memory'?'1':'.8';
+}
+
+/* ================= IndexedDB: file handles for local books (Chrome, local mode) ================= */
+let idb=null;
+function openIdb(){
+  return new Promise((res)=>{
+    try{
+      const rq=indexedDB.open('kept-things-files',1);
+      rq.onupgradeneeded=()=>rq.result.createObjectStore('handles');
+      rq.onsuccess=()=>res(rq.result);
+      rq.onerror=()=>res(null);
+    }catch(e){res(null);}
+  });
+}
+async function saveHandle(id,handle){
+  if(!idb)idb=await openIdb();
+  if(!idb)return false;
+  return new Promise(res=>{
+    try{
+      const tx=idb.transaction('handles','readwrite');
+      tx.objectStore('handles').put(handle,id);
+      tx.oncomplete=()=>res(true); tx.onerror=()=>res(false);
+    }catch(e){res(false);}
+  });
+}
+async function getHandle(id){
+  if(!idb)idb=await openIdb();
+  if(!idb)return null;
+  return new Promise(res=>{
+    try{
+      const tx=idb.transaction('handles','readonly');
+      const rq=tx.objectStore('handles').get(id);
+      rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>res(null);
+    }catch(e){res(null);}
+  });
+}
+async function openLocalFile(item){
+  const h=await getHandle(item.id);
+  if(!h){ toast('找不到这本书的授权记录 — 重新拖入一次即可（本功能需本地 Chrome 打开本文件）'); return; }
+  try{
+    let perm=await h.queryPermission({mode:'read'});
+    if(perm!=='granted') perm=await h.requestPermission({mode:'read'});
+    if(perm!=='granted'){ toast('未授权读取文件'); return; }
+    const f=await h.getFile();
+    const u=URL.createObjectURL(f);
+    window.open(u,'_blank');
+  }catch(e){ toast('打开失败：'+e.name); }
+}
+
+/* ================= export / import ================= */
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='kept-things-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('备份已下载');
+});
+document.getElementById('btnImport').addEventListener('click',()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(!data.modules || !Array.isArray(data.modules)) throw new Error('format');
+    state=data; save(); render(); toast('已从备份恢复 ✓');
+  }catch(err){ toast('这个文件不是有效的备份 JSON'); }
+  e.target.value='';
+});
+
+/* ================= bookmarklet ================= */
+const MARKLET="javascript:(function(){var t=document.title.replace(/\\s*[|]\\s*/g,' - ');var s=t+' | '+location.href;function ok(){var d=document.createElement('div');d.textContent='\\ud83d\\udccc \\u5df2\\u590d\\u5236\\uff0c\\u53bb\\u770b\\u677f\\u7c98\\u8d34';d.style.cssText='position:fixed;top:16px;right:16px;z-index:999999;background:#1E2AA8;color:#FAF3D6;font:700 14px sans-serif;padding:10px 16px;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.3)';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(ok,function(){prompt('\\u624b\\u52a8\\u590d\\u5236\\u8fd9\\u6bb5\\uff1a',s)})}else{prompt('\\u624b\\u52a8\\u590d\\u5236\\u8fd9\\u6bb5\\uff1a',s)}})();";
+document.getElementById('btnMarklet').addEventListener('click',async()=>{
+  try{
+    await navigator.clipboard.writeText(MARKLET);
+    toast('代码已复制 ✓ 新建一个浏览器书签，名称写「📌 Kept」，网址粘贴这段代码。以后在任何网页点它即可收藏');
+  }catch(e){
+    prompt('复制这段代码，存为浏览器书签的"网址"：',MARKLET);
+  }
+});
+
+/* ================= helpers ================= */
+function detectType(url){
+  const u=url.toLowerCase();
+  if(/\.pdf($|[?#])/.test(u))return'pdf';
+  if(/\.epub($|[?#])/.test(u))return'epub';
+  if(/(youtube\.com|youtu\.be|bilibili\.com|vimeo\.com|dailymotion\.com)/.test(u))return'video';
+  return'lien';
+}
+function titleFromUrl(url){
+  try{
+    const u=new URL(url);
+    let seg=decodeURIComponent(u.pathname.split('/').filter(Boolean).pop()||'');
+    seg=seg.replace(/\.(pdf|epub|html?|php)$/i,'').replace(/[-_+]/g,' ').trim();
+    if(seg.length>3 && !/^(watch|index|view|video)$/i.test(seg))return shortenTitle(seg);
+    return u.hostname.replace(/^www\./,'');
+  }catch(e){ return url; }
+}
+/* 精简标题：去掉「| 站名」「- 平台名」等尾巴，限长 */
+function shortenTitle(t){
+  if(!t)return t;
+  t=t.trim().replace(/\s+/g,' ');
+  const seps=[' | ',' — ',' – ',' :: ',' » ',' // '];
+  for(const s of seps){
+    if(t.includes(s)){
+      const first=t.split(s)[0].trim();
+      if(first.length>=6){ t=first; break; }
+    }
+  }
+  // " - SiteName" 尾巴：只有当去掉后主体仍够长才砍
+  const dash=t.split(' - ');
+  if(dash.length>1 && dash[0].trim().length>=8 && dash[dash.length-1].length<=30){
+    t=dash.slice(0,-1).join(' - ').trim();
+  }
+  if(t.length>80)t=t.slice(0,78).trim()+'…';
+  return t;
+}
+const ORDER={video:0,pdf:1,epub:2,lien:3,fichier:4,livre:1.5};
+function sortItems(m){
+  m.items.sort((a,b)=>((ORDER[a.type]??3)-(ORDER[b.type]??3))||a.title.localeCompare(b.title,'fr'));
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function cleanTitle(t){
+  t=(t||'').trim().replace(/\s+/g,' ');
+  if(!t||t.length>200)return null;
+  if(/^unknown$/i.test(t))return null;
+  return shortenTitle(t);
+}
+
+/* ================= real title fetching ================= */
+async function fetchTitleNoembed(url){
+  const r=await fetch('https://noembed.com/embed?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(6000)});
+  const j=await r.json();
+  return cleanTitle(j.title);
+}
+async function fetchTitleClaude(url){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:1000,
+      messages:[{role:'user',content:
+        'Use web search to identify this page: '+url+
+        '\nReply with ONLY a short label, max 60 characters:\n'+
+        '- book: "Title - Author"\n- course/video: "Course name - Platform or teacher"\n- article: short title only\n'+
+        'No site names, no quotes, no explanation. If you cannot verify, reply exactly: UNKNOWN'}],
+      tools:[{type:'web_search_20250305',name:'web_search'}]
+    })
+  });
+  const d=await r.json();
+  if(!d.content)return null;
+  const texts=d.content.filter(b=>b.type==='text').map(b=>b.text.trim()).filter(Boolean);
+  return cleanTitle(texts.length?texts[texts.length-1]:null);
+}
+async function resolveTitle(item,modId){
+  let title=null;
+  try{ title=await fetchTitleNoembed(item.url); }catch(e){}
+  if(!title){ try{ title=await fetchTitleClaude(item.url); }catch(e){} }
+  const m=state.modules.find(x=>x.id===modId); if(!m)return;
+  const it=m.items.find(x=>x.id===item.id); if(!it)return;
+  it.pending=false;
+  if(title && it.auto!==false){ it.title=title; }
+  sortItems(m); save(); render();
+}
+
+/* ================= parsing pasted text ================= */
+/* 支持："标题 | url"、"标题 - url"、纯 url、多行混合 */
+function parseEntries(text){
+  const out=[];
+  text.split('\n').map(s=>s.trim()).filter(Boolean).forEach(line=>{
+    const mtch=line.match(/https?:\/\/[^\s"'<>]+/);
+    if(!mtch)return;
+    const url=mtch[0];
+    let title=line.replace(url,'').replace(/[|–—\-:\s]+$/,'').replace(/^[|–—\-:\s]+/,'').trim();
+    out.push({url,title:title.length>=3?shortenTitle(title):null});
+  });
+  return out;
+}
+
+/* ================= actions ================= */
+function addLink(modId,url,knownTitle){
+  url=url.trim();
+  if(!/^https?:\/\//i.test(url)){ toast('这不像一个链接（需要 http/https 开头）'); return false; }
+  const m=state.modules.find(x=>x.id===modId); if(!m)return false;
+  if(m.items.some(i=>i.url===url)){ toast('这个链接已经在卡片里了'); return false; }
+  const it={id:uid(),url,title:knownTitle?shortenTitle(knownTitle):titleFromUrl(url),type:detectType(url),done:false,auto:!knownTitle,pending:!knownTitle};
+  m.items.push(it);
+  sortItems(m); save(); render();
+  if(!knownTitle){ resolveTitle(it,modId); }
+  return true;
+}
+function addPasted(modId,text){
+  const entries=parseEntries(text);
+  if(!entries.length){ toast('没找到链接（需要 http/https 开头）'); return; }
+  let n=0;
+  entries.forEach(e=>{ if(addLink(modId,e.url,e.title||undefined))n++; });
+  if(n)toast('已别上 '+n+' 条 📌'+(entries.some(e=>!e.title)?' 正在抓取标题…':''));
+}
+async function addDroppedFile(modId,fileOrHandle,isHandle){
+  const m=state.modules.find(x=>x.id===modId); if(!m)return;
+  const name=isHandle?fileOrHandle.name:fileOrHandle.name;
+  const type=/\.pdf$/i.test(name)?'pdf':/\.epub$/i.test(name)?'epub':'fichier';
+  const it={id:uid(),url:null,title:shortenTitle(name.replace(/\.(pdf|epub)$/i,'').replace(/[-_]/g,' ')),type,done:false,localFile:false};
+  if(isHandle){
+    const ok=await saveHandle(it.id,fileOrHandle);
+    it.localFile=ok;
+  }
+  m.items.push(it);
+  sortItems(m); save(); render();
+  toast(it.localFile
+    ?'书已收好 📖 点击标题可直接打开（首次会请求授权）'
+    :'已记下文件名。要能点击打开，请把本文件下载后用 Chrome 本地打开再拖一次');
+}
+
+/* ================= drop parsing (robust + diagnostics) ================= */
+function extractDrop(dt){
+  const html=dt.getData('text/html');
+  if(html){
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const a=doc.querySelector('a[href^="http"]');
+    if(a){
+      const txt=(a.textContent||'').trim();
+      return {url:a.href, title:(txt && txt!==a.href && !/^https?:\/\//.test(txt))?shortenTitle(txt):null};
+    }
+  }
+  const moz=dt.getData('text/x-moz-url');
+  if(moz){
+    const [u,t]=moz.split('\n');
+    if(u&&/^https?:\/\//i.test(u))return{url:u.trim(),title:cleanTitle(t)};
+  }
+  const uris=dt.getData('text/uri-list');
+  if(uris){
+    const line=uris.split('\n').map(s=>s.trim()).find(s=>s&&!s.startsWith('#'));
+    if(line&&/^https?:\/\//i.test(line))return{url:line,title:null};
+  }
+  const u2=dt.getData('URL')||dt.getData('text/plain');
+  if(u2){
+    const mtch=u2.match(/https?:\/\/[^\s"'<>]+/);
+    if(mtch)return{url:mtch[0],title:null};
+  }
+  return null;
+}
+
+/* ================= render ================= */
+function render(){
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  state.modules.forEach((m,mi)=>{
+    const card=document.createElement('section');
+    card.className='card';
+    const doneN=m.items.filter(i=>i.done).length;
+    card.innerHTML=`
+      <svg class="pin" width="34" height="34" viewBox="0 0 30 30"><use href="#pinShape"/></svg>
+      <span class="rule-tag">Module · ${String(mi+1).padStart(2,'0')}</span>
+      <button class="del-mod" title="删除模块">✕</button>
+      <h2 data-role="name">${esc(m.name)}</h2>
+      <div class="count">${m.items.length?`${m.items.length} ressources · ${doneN} lues`:'—'}</div>
+      <ul class="items"></ul>
+      ${m.items.length?'':'<div class="empty">还空着 — 拖链接进来，或在下面粘贴 →</div>'}
+      <div class="addline"><input type="text" placeholder="粘贴「标题 | 链接」或纯链接，回车…"></div>`;
+
+    const h2=card.querySelector('h2');
+    h2.addEventListener('click',()=>{
+      if(h2.querySelector('input'))return;
+      const inp=document.createElement('input');inp.value=m.name;
+      h2.textContent='';h2.appendChild(inp);inp.focus();inp.select();
+      const fin=()=>{m.name=inp.value.trim()||m.name;save();render();};
+      inp.addEventListener('blur',fin);
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape')render();});
+    });
+
+    card.querySelector('.del-mod').addEventListener('click',()=>{
+      if(m.items.length && !confirm(`删除「${m.name}」和里面的 ${m.items.length} 条记录？`))return;
+      state.modules=state.modules.filter(x=>x.id!==m.id);save();render();
+    });
+
+    const ul=card.querySelector('ul');
+    m.items.forEach(it=>{
+      const li=document.createElement('li');li.className='item';
+      const tag=`<span class="tag ${it.type==='video'?'video':''}">${it.type==='video'?'▶ VIDÉO':it.type.toUpperCase()}</span>`;
+      let body;
+      if(it.url){
+        body=`<a class="res ${it.done?'done':''}" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>`;
+      }else if(it.localFile){
+        body=`<span class="filelink ${it.done?'done':''}" data-a="open">${esc(it.title)} 📖</span>`;
+      }else{
+        body=`<span class="noturl ${it.done?'done':''}">${esc(it.title)}</span>`;
+      }
+      li.innerHTML=`${tag}${body}${it.pending?'<span class="pending">titre…</span>':''}
+        <span class="ibtns">
+          <button class="ib" data-a="done" title="标记读完">${it.done?'●':'○'}</button>
+          <button class="ib" data-a="edit" title="改标题">✎</button>
+          <button class="ib" data-a="del" title="删除">✕</button>
+        </span>`;
+      const openEl=li.querySelector('[data-a=open]');
+      if(openEl)openEl.addEventListener('click',()=>openLocalFile(it));
+      li.querySelector('[data-a=done]').addEventListener('click',()=>{it.done=!it.done;save();render();});
+      li.querySelector('[data-a=del]').addEventListener('click',()=>{m.items=m.items.filter(x=>x.id!==it.id);save();render();});
+      li.querySelector('[data-a=edit]').addEventListener('click',()=>{
+        const target=li.querySelector('.res,.noturl,.filelink');
+        const inp=document.createElement('input');inp.className='edit-in';inp.value=it.title;
+        target.replaceWith(inp);inp.focus();inp.select();
+        const fin=()=>{it.title=inp.value.trim()||it.title;it.auto=false;sortItems(m);save();render();};
+        inp.addEventListener('blur',fin);
+        inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape')render();});
+      });
+      ul.appendChild(li);
+    });
+
+    const inp=card.querySelector('.addline input');
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&inp.value.trim()){ addPasted(m.id,inp.value); inp.value=''; }
+    });
+    inp.addEventListener('paste',e=>{
+      const txt=(e.clipboardData||window.clipboardData).getData('text');
+      if(txt&&txt.includes('\n')){ e.preventDefault(); addPasted(m.id,txt); inp.value=''; }
+    });
+
+    ['dragenter','dragover'].forEach(ev=>card.addEventListener(ev,e=>{
+      e.preventDefault();e.stopPropagation();
+      e.dataTransfer.dropEffect='copy';
+      card.classList.add('dragover');
+    }));
+    card.addEventListener('dragleave',e=>{
+      if(card.contains(e.relatedTarget))return;
+      card.classList.remove('dragover');
+    });
+    card.addEventListener('drop',async e=>{
+      e.preventDefault();e.stopPropagation();
+      card.classList.remove('dragover');
+      const dt=e.dataTransfer;
+      const got=extractDrop(dt);
+      if(got){ if(addLink(m.id,got.url,got.title||undefined))toast('已别上 📌'+(got.title?'':' 正在抓取标题…')); return; }
+      // files: try FileSystemHandle first (must be read synchronously from items)
+      if(dt.items&&dt.items.length){
+        const jobs=[];
+        for(const item of dt.items){
+          if(item.kind==='file'){
+            if(item.getAsFileSystemHandle){
+              jobs.push(item.getAsFileSystemHandle().then(h=>h?addDroppedFile(m.id,h,true):null).catch(()=>{
+                const f=item.getAsFile(); if(f)return addDroppedFile(m.id,f,false);
+              }));
+            }else{
+              const f=item.getAsFile(); if(f)jobs.push(addDroppedFile(m.id,f,false));
+            }
+          }
+        }
+        if(jobs.length){ await Promise.all(jobs); return; }
+      }
+      if(dt.files&&dt.files.length){ [...dt.files].forEach(f=>addDroppedFile(m.id,f,false)); return; }
+      // diagnostics
+      const types=[...(dt.types||[])].join(', ')||'（空）';
+      toast('拖入的数据无法识别。浏览器传来的类型：'+types+' — 把这句话发给 Claude 帮你诊断');
+    });
+
+    board.appendChild(card);
+  });
+
+  const add=document.createElement('button');
+  add.className='card new';add.innerHTML='<span>+ épingler un module</span>';
+  add.addEventListener('click',()=>{
+    state.modules.push({id:uid(),name:'Nouveau module',items:[]});
+    save();render();
+    const hs=board.querySelectorAll('.card h2');
+    if(hs.length)hs[hs.length-1].click();
+  });
+  board.appendChild(add);
+
+  document.body.addEventListener('dragover',e=>e.preventDefault());
+  document.body.addEventListener('drop',e=>{e.preventDefault();});
+
+  const total=state.modules.reduce((n,m)=>n+m.items.length,0);
+  document.getElementById('pgno').textContent=String(total).padStart(2,'0')+' / kept';
+}
+
+/* ================= Picture-in-Picture mini todo ================= */
+document.getElementById('btnPip').addEventListener('click',openPiP);
+async function openPiP(){
+  if(pipWin){ try{pipWin.close();}catch(e){} pipWin=null; return; }
+  if(!('documentPictureInPicture' in window)){
+    toast('迷你窗需要 Chrome/Edge 116+。若在 claude.ai 内被拦截：下载本文件后用 Chrome 打开即可');
+    return;
+  }
+  try{
+    pipWin=await documentPictureInPicture.requestWindow({width:330,height:480});
+  }catch(e){
+    toast('浏览器拒绝打开迷你窗（'+e.name+'）— 下载本文件用 Chrome 打开可解决');
+    pipWin=null; return;
+  }
+  const d=pipWin.document;
+  const st=d.createElement('style');
+  st.textContent=`
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Archivo',system-ui,sans-serif;background:#EFE44D;color:#1E2AA8;padding:12px 12px 20px;overflow-y:auto}
+    h1{font-size:15px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+    h1 small{font-family:cursive;font-weight:400;font-size:12px;opacity:.7}
+    .m{background:#FAF3D6;border:1.5px solid #1E2AA8;box-shadow:3px 3px 0 rgba(19,27,112,.25);padding:10px 10px 8px;margin-bottom:12px}
+    .m h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .row{display:flex;gap:6px;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(30,42,168,.15);font-size:12px;line-height:1.3}
+    .row:last-child{border-bottom:none}
+    .row input{accent-color:#1E2AA8;transform:translateY(1px)}
+    .row a{color:#131B70;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(30,42,168,.35);word-break:break-word}
+    .row a:hover{background:rgba(30,42,168,.1)}
+    .done a,.done span{opacity:.4;text-decoration:line-through}
+    .none{font-family:cursive;font-size:13px;opacity:.7;padding:2px 0 4px}`;
+  d.head.appendChild(st);
+  d.body.innerHTML='<h1>Kept things <small>épinglé ↗</small></h1><div id="list"></div>';
+  pipWin.addEventListener('pagehide',()=>{pipWin=null;});
+  renderPiP();
+  toast('小窗已置顶 ✓ 现在手动最小化这个主窗口即可 — 小窗会一直浮在最上面');
+}
+function renderPiP(){
+  if(!pipWin)return;
+  const list=pipWin.document.getElementById('list');
+  if(!list)return;
+  list.innerHTML='';
+  state.modules.forEach(m=>{
+    const box=pipWin.document.createElement('div');box.className='m';
+    box.innerHTML='<h2>'+esc(m.name)+'</h2>';
+    if(!m.items.length){
+      box.insertAdjacentHTML('beforeend','<div class="none">— vide —</div>');
+    }
+    m.items.forEach(it=>{
+      const row=pipWin.document.createElement('label');
+      row.className='row'+(it.done?' done':'');
+      const cb=pipWin.document.createElement('input');
+      cb.type='checkbox';cb.checked=!!it.done;
+      cb.addEventListener('change',()=>{it.done=cb.checked;save();render();});
+      row.appendChild(cb);
+      if(it.url){
+        const a=pipWin.document.createElement('a');
+        a.href=it.url;a.target='_blank';a.rel='noopener';a.textContent=it.title;
+        row.appendChild(a);
+      }else{
+        const sp=pipWin.document.createElement('span');sp.textContent=it.title;
+        row.appendChild(sp);
+      }
+      box.appendChild(row);
+    });
+    list.appendChild(box);
+  });
+}
+
+load();
+</script>
+</body>
+</html>
