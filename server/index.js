@@ -36,11 +36,10 @@ const DEFAULT_PORT = 80;
 const FALLBACK_PORT = 3000;
 const explicitPort = process.env.PORT ? Number(process.env.PORT) : null;
 
-// http://kept.local 只是把 127.0.0.1 起了个别名，端口号该写还是得写，
-// 所以地址提示里始终把端口号（80 除外，因为它是 http 的默认端口）带上
+// 端口号该写还是得写，80 除外，因为它是 http 的默认端口
 function addressHint(port) {
   const suffix = port === 80 ? '' : `:${port}`;
-  return `http://kept.local${suffix} （或 http://localhost${suffix}）`;
+  return `http://localhost${suffix}`;
 }
 
 function startServer(port, allowFallback) {

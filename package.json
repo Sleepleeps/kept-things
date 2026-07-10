@@ -6,7 +6,11 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "repair-titles": "node server/scripts/repairTitles.js"
+    "repair-titles": "node server/scripts/repairTitles.js",
+    "autostart:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-autostart.ps1",
+    "autostart:uninstall": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-autostart.ps1",
+    "autostart:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-server.ps1",
+    "autostart:status": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/status-autostart.ps1"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
