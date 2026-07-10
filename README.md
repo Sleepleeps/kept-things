@@ -225,4 +225,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-Visual design inspired by Zara Zhang's "Pin & Paper" concept. <!-- TODO: add link to original work -->
+Visual design inspired by Zara Zhang's "Pin & Paper" concept: https://github.com/zarazhangrui/beautiful-html-templates
