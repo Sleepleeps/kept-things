@@ -301,17 +301,11 @@ function render() {
       e.preventDefault();
       e.stopPropagation();
       card.classList.remove('dragover');
-      const got = extractDrop(e.dataTransfer);
-      if (got) {
-        const line = got.title ? `${got.title} | ${got.url}` : got.url;
-        await submitText(line);
-        return;
-      }
       if (e.dataTransfer.files && e.dataTransfer.files.length) {
         await uploadFiles(m.id, [...e.dataTransfer.files]);
         return;
       }
-      toast('没识别出链接或文件 — 试试拖地址栏左侧的小图标、页面里的超链接文字，或本地的 PDF/EPUB 文件');
+      toast('如需保存链接，请使用 Chrome 扩展，或粘贴到下方输入框');
     });
 
     board.appendChild(card);
@@ -361,38 +355,6 @@ async function uploadFiles(modId, files) {
     toast(e.message);
   }
   refresh();
-}
-
-/* ================= drop parsing (robust, ported from prototype) ================= */
-function extractDrop(dt) {
-  const html = dt.getData('text/html');
-  if (html) {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const a = doc.querySelector('a[href^="http"]');
-    if (a) {
-      const txt = (a.textContent || '').trim();
-      return { url: a.href, title: txt && txt !== a.href && !/^https?:\/\//.test(txt) ? txt : null };
-    }
-  }
-  const moz = dt.getData('text/x-moz-url');
-  if (moz) {
-    const [u, t] = moz.split('\n');
-    if (u && /^https?:\/\//i.test(u)) return { url: u.trim(), title: t ? t.trim() : null };
-  }
-  const uris = dt.getData('text/uri-list');
-  if (uris) {
-    const line = uris
-      .split('\n')
-      .map((s) => s.trim())
-      .find((s) => s && !s.startsWith('#'));
-    if (line && /^https?:\/\//i.test(line)) return { url: line, title: null };
-  }
-  const u2 = dt.getData('URL') || dt.getData('text/plain');
-  if (u2) {
-    const mtch = u2.match(/https?:\/\/[^\s"'<>]+/);
-    if (mtch) return { url: mtch[0], title: null };
-  }
-  return null;
 }
 
 /* ================= export / import ================= */

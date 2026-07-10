@@ -26,7 +26,7 @@ Everything you add — links, notes, uploaded PDFs/EPUBs, backups — is written
 ## Features
 
 - **Modules**: create/rename/delete card-style modules; a one-click "+ Today" button makes a dated to-do module
-- **Add resources three ways**: paste links (single or batch, optionally as `Title | URL`), drag-and-drop links from the browser, or drag-and-drop local PDF/EPUB files
+- **Add resources**: paste links into the input box (single or batch, optionally as `Title | URL`), drag-and-drop local PDF/EPUB files, or use the Chrome extension to bookmark the current page
 - **Auto title fetching** for pasted links, with manual override
 - **Plain-text to-dos** mixed into the same input — anything without a URL becomes a note-style item
 - **Built-in EPUB reader** with page navigation, table of contents, font-size control, and resume-where-you-left-off
@@ -111,11 +111,10 @@ npm run autostart:status
 - **改名**：点击卡片标题文字，输入新名字，回车或点别处确认
 - **删除**：点卡片右上角的 ✕，会弹出确认框（连同里面收藏的条目和本地文件一起删除）
 
-### 加资源，三种方式
+### 加资源
 1. **粘贴链接**：在卡片底部输入框粘贴一个或多个链接（一行一个），回车或直接粘贴多行文本即可批量添加。也可以写成「标题 | 链接」的格式自己指定标题。
-2. **拖拽**：把浏览器里的链接（比如地址栏图标、页面里的超链接文字）直接拖进卡片。
-3. **拖拽本地文件**：把电脑里的 PDF 或 EPUB 文件直接拖进卡片，文件会被复制一份到 `data/library/` 文件夹，由这个小程序自己管理。
-4. **Chrome 扩展**（见下面「安装 Chrome 扩展」）：浏览网页时一键收藏当前页。
+2. **拖拽本地文件**：把电脑里的 PDF 或 EPUB 文件直接拖进卡片，文件会被复制一份到 `data/library/` 文件夹，由这个小程序自己管理。
+3. **Chrome 扩展**（见下面「安装 Chrome 扩展」）：浏览网页时一键收藏当前页。
 
 粘贴网页链接后，几秒钟内标题会自动替换成网页的真实标题（去掉了网站名尾巴，比如「XXX - 知乎」这种）。如果抓取失败，会保留一个根据网址推测的名字，你可以点条目右边的 ✎ 手动改。**手动改过的标题不会再被自动覆盖。**
 
