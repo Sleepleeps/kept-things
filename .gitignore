@@ -1,3 +1,13 @@
 node_modules/
 data/
 *.log
+
+# OS junk files
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+Icon?
+
+# Local-only working notes (not part of the public repo)
+kept-things-final-prompt-EN.md

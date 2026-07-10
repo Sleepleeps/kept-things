@@ -1,14 +1,57 @@
-# Kept Things — 本地学习看板
+# Kept Things
 
-一个只在你自己电脑上运行的学习资料管理看板。黄纸背景、墨水蓝、别针插图的视觉风格来自你自己做的原型 `mon-tableau-d-etudes-v2.html`。
+A personal, local-only learning dashboard: pin your web links, PDF/EPUB books, and daily to-dos onto modules styled like yellow paper cards tacked to a wall. No login, no cloud, no server but the one running on your own machine.
+
+## Screenshots
+
+<!-- TODO: add screenshots, e.g. -->
+<!-- ![Board view](docs/screenshot-board.png) -->
+<!-- ![EPUB reader](docs/screenshot-reader.png) -->
+
+## Quick start
+
+```bash
+git clone https://github.com/Yuanyuan-cyber2026/kept-things.git
+cd kept-things
+npm install
+npm start
+```
+
+Open the address printed in the terminal (defaults to `http://localhost`, falls back to `http://localhost:3000` if port 80 isn't available).
+
+## Your data stays local
+
+Everything you add — links, notes, uploaded PDFs/EPUBs, backups — is written to the `data/` folder inside the project. That folder is git-ignored by design: it's never committed, never pushed, and never leaves your machine. This is a personal single-user tool with no accounts and no sync; `data/` is yours alone.
+
+## Features
+
+- **Modules**: create/rename/delete card-style modules; a one-click "+ Today" button makes a dated to-do module
+- **Add resources three ways**: paste links (single or batch, optionally as `Title | URL`), drag-and-drop links from the browser, or drag-and-drop local PDF/EPUB files
+- **Auto title fetching** for pasted links, with manual override
+- **Plain-text to-dos** mixed into the same input — anything without a URL becomes a note-style item
+- **Built-in EPUB reader** with page navigation, table of contents, font-size control, and resume-where-you-left-off
+- **Picture-in-picture mini window** for a floating to-do checklist (Chrome/Edge 116+)
+- **Export / import** your whole board as JSON, plus automatic rolling backups on every startup
+- **Chrome extension** for one-click bookmarking from any page
+- **Optional Windows autostart** so the server runs quietly in the background on login
+
+## Chinese documentation
+
+The detailed walkthrough below (first-time setup, autostart, day-to-day usage, troubleshooting) is in Chinese, written for the original personal use case.
+
+---
+
+# 中文说明
+
+一个只在你自己电脑上运行的学习资料管理看板。黄纸背景、墨水蓝、别针插图的视觉风格来自项目里的原型 `mon-tableau-d-etudes-v3.html`。
 
 ---
 
 ## 第一次使用：怎么启动
 
-1. 打开命令行工具（PowerShell），进入项目文件夹：
+1. 克隆或下载项目后，打开命令行工具（PowerShell），进入项目文件夹：
    ```
-   cd C:\Users\tina\Documents\kept-things
+   cd kept-things
    ```
 2. 第一次使用需要先安装依赖（只需要做一次）：
    ```
@@ -105,7 +148,7 @@ npm run autostart:status
 
 ## 数据都存在哪里
 
-都在项目文件夹下的 `data/` 里：
+都在项目文件夹下的 `data/` 里，这个文件夹已经加入 `.gitignore`，不会被提交到代码仓库：
 
 | 位置 | 内容 |
 |---|---|
@@ -123,7 +166,7 @@ npm run autostart:status
 2. 打开 Chrome，地址栏输入 `chrome://extensions`，回车
 3. 打开右上角的「开发者模式」开关
 4. 点「加载已解压的扩展程序」
-5. 选择项目里的 `extension` 文件夹（`C:\Users\tina\Documents\kept-things\extension`）
+5. 选择你克隆的项目目录下的 `extension` 文件夹
 6. 浏览器工具栏会出现一个新图标，浏览网页时点一下，选择要收藏进哪个模块，点「收藏当前页」
 
 如果点击后提示"无法连接本地服务"，说明 Kept Things 服务器没有在运行，先 `npm start` 一下。
@@ -173,3 +216,13 @@ kept-things/
   extension/       Chrome 一键收藏扩展
   data/            你的所有数据（不会被提交到代码仓库）
 ```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+## Acknowledgements
+
+Visual design inspired by Zara Zhang's "Pin & Paper" concept. <!-- TODO: add link to original work -->
