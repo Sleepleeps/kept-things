@@ -132,6 +132,37 @@ npm run autostart:install
 
 ---
 
+## 打包成 Windows 桌面应用（不用装 Node，双击就能开）
+
+用 [Tauri](https://tauri.app/) 把 Kept Things 包成一个原生窗口的桌面软件：启动时会自己把 `server/` 拉起来当后台服务，开一个窗口显示看板，关掉窗口服务也会一起退出。装包体积在几十 MB 量级（不需要像 Electron 那样额外带一份 Chromium，Windows 10/11 自带的 WebView2 就够用），比较适合分享给不想自己装 Node、跑命令行的人用。
+
+**第一次打包前需要装好这些（只需要装一次）：**
+
+1. [Rust](https://rustup.rs/)：下载 `rustup-init.exe` 装上，默认选项一路下一步就行
+2. Visual Studio 的「使用 C++ 的桌面开发」组件：装 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，安装时勾选「使用 C++ 的桌面开发」这个工作负载（Rust 在 Windows 上编译需要它，这一步文件比较大，视网速可能要等一会）
+3. WebView2 运行时：Windows 10 / 11 一般已经自带，如果打包/运行时报找不到 WebView2，去 [微软官网](https://developer.microsoft.com/microsoft-edge/webview2/) 下「Evergreen Bootstrapper」装一下
+
+**打包步骤：**
+
+```powershell
+cd kept-things
+npm install
+npm run tauri:build
+```
+
+`npm run tauri:build` 会先跑 `scripts/prepare-tauri-sidecar.js`，把你电脑上正在用的这个 Node.js 复制一份塞进安装包里（这样装到别人电脑上也不需要对方另外装 Node），然后调用 Tauri 编译、打包。第一次编译 Rust 依赖会比较慢（几分钟），之后再打包会快很多。
+
+打包产物在 `src-tauri/target/release/bundle/` 下面，Windows 上通常会同时生成：
+
+| 文件 | 说明 |
+|---|---|
+| `msi/Kept Things_0.1.0_x64_en-US.msi` | 标准 Windows 安装包 |
+| `nsis/Kept Things_0.1.0_x64-setup.exe` | 体积更小的安装程序，双击就能装 |
+
+想不装应用、只是本地调试打包壳的效果，用 `npm run tauri:dev`（同样会先复制 sidecar，再以开发模式打开原生窗口）。
+
+---
+
 ## 目录说明（给好奇的你）
 
 ```
@@ -139,6 +170,7 @@ kept-things/
   server/          后端代码（Node.js + Express）
   public/          前端页面（看板 + EPUB 阅读器）
   extension/       Chrome 一键收藏扩展
+  src-tauri/       打包成桌面应用用的 Tauri 外壳（见上一节）
   data/            你的所有数据（不会被提交到代码仓库）
 ```
 
