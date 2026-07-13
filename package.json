@@ -10,7 +10,11 @@
     "autostart:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-autostart.ps1",
     "autostart:uninstall": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-autostart.ps1",
     "autostart:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-server.ps1",
-    "autostart:status": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/status-autostart.ps1"
+    "autostart:status": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/status-autostart.ps1",
+    "tauri": "tauri",
+    "tauri:prepare": "node scripts/prepare-tauri-sidecar.js",
+    "tauri:dev": "npm run tauri:prepare && tauri dev",
+    "tauri:build": "npm run tauri:prepare && tauri build"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
@@ -20,5 +24,8 @@
     "jszip": "^3.10.1",
     "multer": "^2.0.0",
     "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
   }
 }

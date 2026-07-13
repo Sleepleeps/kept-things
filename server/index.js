@@ -72,3 +72,18 @@ function startServer(port, allowFallback) {
 }
 
 startServer(explicitPort || DEFAULT_PORT, !explicitPort);
+
+// 被 Tauri 打包壳当 sidecar 拉起时会传这个环境变量，指向壳进程的 PID。
+// 壳被强制杀掉（任务管理器结束进程、系统关机等，走不到正常的窗口关闭事件）
+// 时，这里定期确认壳还活着，一旦发现它没了就自己退出，避免残留在后台占着端口。
+if (process.env.KT_PARENT_PID) {
+  const parentPid = Number(process.env.KT_PARENT_PID);
+  setInterval(() => {
+    try {
+      process.kill(parentPid, 0);
+    } catch (e) {
+      console.log('[kept-things] 打包壳进程已退出，自动关闭服务');
+      process.exit(0);
+    }
+  }, 2000).unref();
+}

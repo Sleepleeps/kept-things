@@ -411,6 +411,7 @@ document.getElementById('btnToday').addEventListener('click', async () => {
 
 /* ================= Picture-in-Picture mini todo (ported from prototype) ================= */
 document.getElementById('btnPip').addEventListener('click', openPiP);
+const PIP_LAST_MOD_KEY = 'kt-pip-last-module';
 async function openPiP() {
   if (pipWin) {
     try {
@@ -426,19 +427,25 @@ async function openPiP() {
     return;
   }
   try {
-    pipWin = await documentPictureInPicture.requestWindow({ width: 330, height: 480 });
+    pipWin = await documentPictureInPicture.requestWindow({ width: 340, height: 520 });
   } catch (e) {
     toast('浏览器拒绝打开迷你窗（' + e.name + '）');
     pipWin = null;
     return;
   }
   const d = pipWin.document;
+  d.title = 'Kept things · Mini';
   const st = d.createElement('style');
   st.textContent = `
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Archivo',system-ui,sans-serif;background:#EFE44D;color:#1E2AA8;padding:12px 12px 20px;overflow-y:auto}
-    h1{font-size:15px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-    h1 small{font-family:cursive;font-weight:400;font-size:12px;opacity:.7}
+    html,body{height:100%}
+    body{font-family:'Archivo',system-ui,sans-serif;background:#EFE44D;color:#1E2AA8;display:flex;flex-direction:column;overflow:hidden}
+    .pip-head{flex:none;padding:12px 12px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .pip-head h1{font-size:15px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+    .pip-head h1 small{font-family:cursive;font-weight:400;font-size:12px;opacity:.7;display:block}
+    .pip-go{flex:none;font:700 10px 'Archivo',sans-serif;letter-spacing:.04em;text-transform:uppercase;border:1.5px solid #1E2AA8;background:#FAF3D6;color:#1E2AA8;padding:5px 8px;cursor:pointer;box-shadow:2px 2px 0 rgba(19,27,112,.25)}
+    .pip-go:hover{background:#1E2AA8;color:#FAF3D6}
+    #list{flex:1;overflow-y:auto;padding:0 12px}
     .m{background:#FAF3D6;border:1.5px solid #1E2AA8;box-shadow:3px 3px 0 rgba(19,27,112,.25);padding:10px 10px 8px;margin-bottom:12px}
     .m h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
     .row{display:flex;gap:6px;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(30,42,168,.15);font-size:12px;line-height:1.3}
@@ -450,17 +457,88 @@ async function openPiP() {
     .row .pdate{flex:none;font-family:cursive;font-size:11px;opacity:.6}
     .done a,.done span.txt{opacity:.4;text-decoration:line-through}
     .none{font-family:cursive;font-size:13px;opacity:.7;padding:2px 0 4px}
-    .pdivider{border-top:1px dashed rgba(30,42,168,.3);margin:6px 0}`;
+    .pdivider{border-top:1px dashed rgba(30,42,168,.3);margin:6px 0}
+    .pip-add{flex:none;display:flex;gap:6px;padding:8px 12px 12px;border-top:1.5px dashed rgba(30,42,168,.35)}
+    .pip-add select{flex:none;max-width:76px;font:600 10px 'Archivo',sans-serif;color:#1E2AA8;background:#FAF3D6;border:1.5px solid #1E2AA8;padding:4px}
+    .pip-add input{flex:1;min-width:0;font:500 12px 'Archivo',sans-serif;color:#1E2AA8;background:#FAF3D6;border:1.5px solid #1E2AA8;padding:4px 6px;outline:none}
+    .pip-add button{flex:none;font:700 13px 'Archivo',sans-serif;border:1.5px solid #1E2AA8;background:#1E2AA8;color:#FAF3D6;padding:4px 10px;cursor:pointer}
+    .pip-add button:disabled{opacity:.5;cursor:default}`;
   d.head.appendChild(st);
-  d.body.innerHTML = '<h1>Kept things <small>épinglé ↗</small></h1><div id="list"></div>';
+  d.body.innerHTML = `
+    <div class="pip-head">
+      <h1>Kept things <small>épinglé ↗</small></h1>
+      <button type="button" class="pip-go" id="pipGoBig" title="回到大面板窗口">⤢ 大面板</button>
+    </div>
+    <div id="list"></div>
+    <form class="pip-add" id="pipAdd">
+      <select id="pipAddMod"></select>
+      <input id="pipAddText" type="text" placeholder="快速添加待办/链接…" autocomplete="off">
+      <button type="submit">+</button>
+    </form>`;
+  // 部分系统上 Document PiP 首帧不刷新（已知渲染问题）：强制触发一次重排
+  void d.body.offsetHeight;
+  d.body.style.display = 'none';
+  void d.body.offsetHeight;
+  d.body.style.display = 'flex';
+  pipWin.requestAnimationFrame(() => pipWin.requestAnimationFrame(() => {}));
+
+  d.getElementById('pipGoBig').addEventListener('click', () => {
+    try {
+      window.focus();
+    } catch (e) {
+      // ignore
+    }
+  });
+  d.getElementById('pipAdd').addEventListener('submit', onPipAddSubmit);
+
   pipWin.addEventListener('pagehide', () => {
     pipWin = null;
   });
   renderPiP();
   toast('迷你窗已置顶 — 可拖到屏幕任意角落');
 }
+async function onPipAddSubmit(e) {
+  e.preventDefault();
+  if (!pipWin) return;
+  const sel = pipWin.document.getElementById('pipAddMod');
+  const input = pipWin.document.getElementById('pipAddText');
+  const btn = e.target.querySelector('button[type=submit]');
+  const modId = sel.value;
+  const text = input.value.trim();
+  if (!modId) {
+    toast('先在大面板新建一个模块');
+    return;
+  }
+  if (!text) return;
+  btn.disabled = true;
+  try {
+    await api('POST', `/api/modules/${modId}/items`, { text });
+    localStorage.setItem(PIP_LAST_MOD_KEY, modId);
+    input.value = '';
+    await refresh();
+  } catch (err) {
+    toast(err.message);
+  }
+  btn.disabled = false;
+  input.focus();
+}
+function renderPipAddModSelect() {
+  if (!pipWin) return;
+  const sel = pipWin.document.getElementById('pipAddMod');
+  if (!sel) return;
+  const prev = sel.value || localStorage.getItem(PIP_LAST_MOD_KEY);
+  sel.innerHTML = '';
+  state.modules.forEach((m) => {
+    const opt = pipWin.document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.name;
+    sel.appendChild(opt);
+  });
+  if (prev && state.modules.some((m) => m.id === prev)) sel.value = prev;
+}
 function renderPiP() {
   if (!pipWin) return;
+  renderPipAddModSelect();
   const list = pipWin.document.getElementById('list');
   if (!list) return;
   list.innerHTML = '';
