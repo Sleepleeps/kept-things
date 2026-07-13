@@ -97,6 +97,8 @@ li.item:hover .ibtns{opacity:1}
 .addline input:focus{border-bottom-color:var(--ink)}
 .del-mod{position:absolute;top:14px;right:14px;border:none;background:none;color:var(--ink);cursor:pointer;font-size:15px;opacity:.4;padding:4px;line-height:1}
 .del-mod:hover{opacity:1}
+.obs-sync{position:absolute;top:14px;right:38px;border:none;background:none;color:var(--ink);cursor:pointer;font-size:14px;opacity:.4;padding:4px;line-height:1}
+.obs-sync:hover{opacity:1}
 .card.new{
   background:transparent;border:2px dashed var(--line);box-shadow:none;
   display:flex;align-items:center;justify-content:center;min-height:190px;

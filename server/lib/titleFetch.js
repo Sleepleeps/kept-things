@@ -39,6 +39,7 @@ function cleanTitle(raw) {
 
 function detectType(url) {
   const u = url.toLowerCase();
+  if (!/^https?:\/\//.test(u)) return 'app';
   if (/\.pdf($|[?#])/.test(u)) return 'pdf';
   if (/\.epub($|[?#])/.test(u)) return 'epub';
   if (/(youtube\.com|youtu\.be|bilibili\.com|vimeo\.com|dailymotion\.com)/.test(u)) return 'video';

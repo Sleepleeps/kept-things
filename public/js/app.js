@@ -160,6 +160,7 @@ function render() {
     card.innerHTML = `
       <svg class="pin" width="34" height="34" viewBox="0 0 30 30"><use href="#pinShape"/></svg>
       <span class="rule-tag">Module · ${String(mi + 1).padStart(2, '0')}</span>
+      <button class="obs-sync" title="写入 Obsidian 今日日记">⇄</button>
       <button class="del-mod" title="删除模块">✕</button>
       <h2 data-role="name">${esc(m.name)}</h2>
       <div class="count">${m.items.length ? `${m.items.length} ressources · ${doneN} lues` : '—'}</div>
@@ -193,6 +194,8 @@ function render() {
         if (e.key === 'Escape') render();
       });
     });
+
+    card.querySelector('.obs-sync').addEventListener('click', () => syncModuleToObsidian(m));
 
     card.querySelector('.del-mod').addEventListener('click', async () => {
       if (m.items.length && !confirm(`删除「${m.name}」和里面的 ${m.items.length} 条记录？本地文件也会一并删除。`)) return;
@@ -596,6 +599,70 @@ function renderPiP() {
     list.appendChild(box);
   });
 }
+
+/* ================= Obsidian daily note 联动 ================= */
+const OBS_KEYS = { vault: 'kt-obsidian-vault', folder: 'kt-obsidian-folder', dateFmt: 'kt-obsidian-date-fmt' };
+function getObsidianSettings() {
+  return {
+    vault: localStorage.getItem(OBS_KEYS.vault) || '',
+    folder: localStorage.getItem(OBS_KEYS.folder) || '',
+    dateFmt: localStorage.getItem(OBS_KEYS.dateFmt) || 'YYYY-MM-DD'
+  };
+}
+function promptObsidianSettings(prev) {
+  const vault = prompt('Obsidian 仓库（vault）名字：', prev.vault);
+  if (!vault || !vault.trim()) return null;
+  const folder = prompt('日记所在文件夹（相对仓库根目录，没有子文件夹就留空）：', prev.folder) || '';
+  const dateFmt = prompt('日记文件名的日期格式（支持 YYYY / MM / DD，比如 YYYY-MM-DD）：', prev.dateFmt || 'YYYY-MM-DD') || 'YYYY-MM-DD';
+  const settings = {
+    vault: vault.trim(),
+    folder: folder.trim().replace(/^\/+|\/+$/g, ''),
+    dateFmt: dateFmt.trim() || 'YYYY-MM-DD'
+  };
+  localStorage.setItem(OBS_KEYS.vault, settings.vault);
+  localStorage.setItem(OBS_KEYS.folder, settings.folder);
+  localStorage.setItem(OBS_KEYS.dateFmt, settings.dateFmt);
+  return settings;
+}
+function formatObsidianDate(fmt) {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return fmt.replace(/YYYY/g, d.getFullYear()).replace(/MM/g, pad(d.getMonth() + 1)).replace(/DD/g, pad(d.getDate()));
+}
+function mdSafe(s) {
+  return String(s).replace(/[[\]]/g, '');
+}
+function moduleToObsidianChecklist(m) {
+  if (!m.items.length) return '- （还没有条目）';
+  return m.items
+    .map((it) => {
+      const box = it.done ? '[x]' : '[ ]';
+      const label = it.url ? `[${mdSafe(it.title)}](${it.url})` : mdSafe(it.title);
+      return `- ${box} ${label}`;
+    })
+    .join('\n');
+}
+function syncModuleToObsidian(m) {
+  let settings = getObsidianSettings();
+  if (!settings.vault) {
+    settings = promptObsidianSettings(settings);
+    if (!settings) return;
+  }
+  const fileBase = formatObsidianDate(settings.dateFmt);
+  const filePath = settings.folder ? `${settings.folder}/${fileBase}` : fileBase;
+  const content = `## ${mdSafe(m.name)} — Kept Things\n${moduleToObsidianChecklist(m)}\n`;
+  const uri =
+    `obsidian://new?vault=${encodeURIComponent(settings.vault)}` +
+    `&file=${encodeURIComponent(filePath)}` +
+    `&content=${encodeURIComponent(content)}` +
+    `&append=true`;
+  window.location.href = uri;
+  toast('已尝试打开 Obsidian 写入今日日记 — 没反应的话检查一下仓库名是否拼对了');
+}
+document.getElementById('btnObsSettings').addEventListener('click', () => {
+  const settings = promptObsidianSettings(getObsidianSettings());
+  if (settings) toast('Obsidian 联动设置已保存');
+});
 
 // 拖拽到卡片以外的地方时，不要让浏览器整页跳转/打开文件
 document.body.addEventListener('dragover', (e) => e.preventDefault());
