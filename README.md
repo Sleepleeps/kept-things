@@ -161,6 +161,22 @@ npm run tauri:build
 
 想不装应用、只是本地调试打包壳的效果，用 `npm run tauri:dev`（同样会先复制 sidecar，再以开发模式打开原生窗口）。
 
+### 打包时的两个常见坑
+
+**1. 卡在下载 `wix314-binaries.zip`，最后只有 `app.exe` 没有安装包**
+
+生成 `.msi` 需要 Tauri 去 GitHub 下载 WiX 工具集，网络不好时容易中断。有两个办法：
+
+- **只打 NSIS 安装包**（推荐，体积更小，也不需要 WiX）：
+  ```powershell
+  npm run tauri:build:nsis
+  ```
+- 或者干脆**不打安装包，直接用编译好的 exe**：编译出来的 `src-tauri\target\release\app.exe` 本身就是完整可运行的程序，它旁边的 `kt-app\`、`node.exe` 就是它需要的全部资源，双击 `app.exe` 就能开。想发给别人，把 `target\release\` 下的 `app.exe`、`kt-app\`、`node.exe` 一起打个压缩包发过去即可。
+
+**2. 双击 `app.exe` 白屏、提示「127.0.0.1 拒绝连接」**
+
+这是一个已修复的 Bug（Windows 盘符路径 `E:\...` 被错误截断导致内置服务启动崩溃）。请确保你的分支包含了这个修复后**重新 `npm run tauri:build`**。修复后如果服务仍然起不来，窗口会显示一个中文的错误说明页（而不是白屏），照着上面的提示排查即可（多半是端口 47823 被占用，或杀毒软件拦了内置的 Node 服务）。
+
 ---
 
 ## 目录说明（给好奇的你）

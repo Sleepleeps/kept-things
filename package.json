@@ -14,7 +14,8 @@
     "tauri": "tauri",
     "tauri:prepare": "node scripts/prepare-tauri-sidecar.js",
     "tauri:dev": "npm run tauri:prepare && tauri dev",
-    "tauri:build": "npm run tauri:prepare && tauri build"
+    "tauri:build": "npm run tauri:prepare && tauri build",
+    "tauri:build:nsis": "npm run tauri:prepare && tauri build --bundles nsis"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
