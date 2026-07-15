@@ -3,6 +3,9 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": ["main"],
+  "remote": {
+    "urls": ["http://127.0.0.1:47823/*", "http://localhost:47823/*"]
+  },
   "permissions": [
     "core:default",
     {
@@ -13,6 +16,14 @@
           "sidecar": true,
           "args": true
         }
+      ]
+    },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "*://*" },
+        { "url": "mailto:*" },
+        { "url": "tel:*" }
       ]
     }
   ]

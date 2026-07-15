@@ -83,6 +83,7 @@ fn wait_for_server(port: u16, timeout: Duration) -> bool {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -100,6 +101,17 @@ pub fn run() {
             let app_dir = resource_dir.join("kt-app");
             let server_entry = app_dir.join("server").join("index.js");
 
+            // 应用装在 Program Files 之类的位置时，普通用户没有写权限，Node
+            // 进程往安装目录旁边的 data/ 写东西会直接失败。这里改成让它写到
+            // 系统标准的每用户可写目录（Windows: %APPDATA%\<identifier>，
+            // macOS: ~/Library/Application Support/<identifier>，Linux:
+            // ~/.local/share/<identifier>），跟安装位置、权限都无关。
+            let data_dir = strip_verbatim_prefix(
+                app.path()
+                    .app_data_dir()
+                    .expect("无法解析 app data 目录"),
+            );
+
             let (mut rx, child) = app
                 .shell()
                 .sidecar("node")
@@ -107,6 +119,7 @@ pub fn run() {
                 .current_dir(app_dir)
                 .env("PORT", APP_PORT.to_string())
                 .env("KT_PARENT_PID", std::process::id().to_string())
+                .env("KT_DATA_DIR", data_dir.to_string_lossy().to_string())
                 .args([server_entry.to_string_lossy().to_string()])
                 .spawn()
                 .expect("启动内嵌 Node 服务失败");

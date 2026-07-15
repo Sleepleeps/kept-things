@@ -494,6 +494,31 @@ async function openPiP() {
   });
   d.getElementById('pipAdd').addEventListener('submit', onPipAddSubmit);
 
+  // 迷你窗口是独立的 document（documentPictureInPicture），主窗口那个转发
+  // 链接点击的 capture 阶段监听不会跨文档生效，这里在迷你窗口自己的 document
+  // 上再挂一份（同样用 capture 阶段抢在 WRY 内置逻辑前面），否则打包成桌面
+  // 应用后迷你窗里的链接会点了没反应。
+  if (window.__TAURI__) {
+    d.addEventListener(
+      'click',
+      (e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const a = e.composedPath().find((el) => el instanceof Element && el.nodeName === 'A');
+        if (!a || !a.href) return;
+        try {
+          // eslint-disable-next-line no-new
+          new URL(a.href);
+        } catch (err) {
+          return;
+        }
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        window.__TAURI__.core.invoke('plugin:opener|open_url', { url: a.href }).catch((err) => toast('打不开：' + err));
+      },
+      true
+    );
+  }
+
   pipWin.addEventListener('pagehide', () => {
     pipWin = null;
   });
@@ -663,6 +688,36 @@ document.getElementById('btnObsSettings').addEventListener('click', () => {
   const settings = promptObsidianSettings(getObsidianSettings());
   if (settings) toast('Obsidian 联动设置已保存');
 });
+
+// 打包成桌面应用（Tauri）时，<a target="_blank"> 在原生窗口里默认什么反应
+// 都没有——普通浏览器里直接开新标签页那套行为不会自动发生。实测发现 Tauri /
+// WRY 会在事件到达页面脚本之前就针对 target="_blank" 的 http(s) 链接把
+// defaultPrevented 标成 true（应该是内置的"不让内嵌 webview 自己弹窗"逻辑），
+// 导致 opener 插件自带的 bubble 阶段监听器和普通 JS 监听器都来不及处理，点了
+// 没反应。这里改成在 capture 阶段抢在最前面接管所有链接点击（http(s) 和
+// calibre://、obsidian:// 这类自定义协议都算），统一转发给 opener 插件的
+// open_url。纯浏览器模式下 window.__TAURI__ 不存在，走普通的 <a> 默认行为
+// 就行，不受影响。
+if (window.__TAURI__) {
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.composedPath().find((el) => el instanceof Element && el.nodeName === 'A');
+      if (!a || !a.href) return;
+      try {
+        // eslint-disable-next-line no-new
+        new URL(a.href);
+      } catch (err) {
+        return;
+      }
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      window.__TAURI__.core.invoke('plugin:opener|open_url', { url: a.href }).catch((err) => toast('打不开：' + err));
+    },
+    true
+  );
+}
 
 // 拖拽到卡片以外的地方时，不要让浏览器整页跳转/打开文件
 document.body.addEventListener('dragover', (e) => e.preventDefault());

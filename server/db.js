@@ -2,7 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+// 被 Tauri 打包壳当 sidecar 拉起时会传 KT_DATA_DIR（系统标准的每用户可写
+// 目录），因为安装目录（比如 Windows 的 Program Files）普通用户往往没有写
+// 权限。普通用 npm start 跑的话没有这个环境变量，跟以前一样写到项目内的
+// data/ 文件夹。
+const DATA_DIR = process.env.KT_DATA_DIR ? path.resolve(process.env.KT_DATA_DIR, 'data') : path.join(__dirname, '..', 'data');
 const DATA_FILE = path.join(DATA_DIR, 'kept-things.json');
 const LIBRARY_DIR = path.join(DATA_DIR, 'library');
 const BACKUPS_DIR = path.join(DATA_DIR, 'backups');
