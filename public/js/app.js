@@ -415,7 +415,44 @@ document.getElementById('btnToday').addEventListener('click', async () => {
 /* ================= Picture-in-Picture mini todo (ported from prototype) ================= */
 document.getElementById('btnPip').addEventListener('click', openPiP);
 const PIP_LAST_MOD_KEY = 'kt-pip-last-module';
+
+// 打包成桌面应用（Tauri）时用真正的原生置顶窗口做迷你面板——Chrome 的
+// documentPictureInPicture 是"浏览器标签页"才有的功能（需要外层浏览器提供
+// 承载窗口的能力），嵌入式的 WebView2 没有这个外壳，调用会直接被拒绝
+// （NotAllowedError）。纯浏览器模式下 window.__TAURI__ 不存在，走下面原来
+// 那套 documentPictureInPicture 逻辑。
+let miniWin = null;
+async function openMiniNative() {
+  const { WebviewWindow } = window.__TAURI__.webviewWindow;
+  const existing = await WebviewWindow.getByLabel('mini');
+  if (existing) {
+    await existing.close();
+    miniWin = null;
+    return;
+  }
+  miniWin = new WebviewWindow('mini', {
+    // 用完整地址（跟主窗口同源），不能写成相对路径 'mini.html'——那样会被
+    // 解析成 Tauri 打包资源协议的地址，跟本地 Express 服务器不是同一个源，
+    // 里面的 fetch('/api/modules') 会请求不到，导致列表一直是空的。
+    url: window.location.origin + '/mini.html',
+    title: 'Kept Things · Mini',
+    width: 340,
+    height: 520,
+    alwaysOnTop: true,
+    resizable: true,
+    decorations: true
+  });
+  miniWin.once('tauri://error', () => {
+    toast('迷你窗打开失败');
+    miniWin = null;
+  });
+}
+
 async function openPiP() {
+  if (window.__TAURI__) {
+    openMiniNative();
+    return;
+  }
   if (pipWin) {
     try {
       pipWin.close();
