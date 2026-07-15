@@ -148,11 +148,20 @@ document.getElementById('pipAdd').addEventListener('submit', onAddSubmit);
 
 document.getElementById('pipGoBig').addEventListener('click', async () => {
   if (!window.__TAURI__) return;
+  const status = document.getElementById('pipGoBig');
   try {
     const main = await window.__TAURI__.webviewWindow.WebviewWindow.getByLabel('main');
-    if (main) await main.setFocus();
+    if (!main) {
+      status.textContent = '⤢ 没找到大面板窗口';
+      return;
+    }
+    // 主窗口如果被最小化了，光调 setFocus() 在 Windows 上不一定能把它从
+    // 任务栏拉回来，所以先 show() + unminimize() 再 setFocus()。
+    await main.show();
+    await main.unminimize();
+    await main.setFocus();
   } catch (e) {
-    // ignore
+    status.textContent = '⤢ 失败：' + (e && e.message ? e.message : e);
   }
 });
 
